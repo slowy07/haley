@@ -52,3 +52,23 @@ bootcode:
   mov sp, 0x7C00
   sti
   mov [DriveNumber], dl
+
+do_e820:
+  mov edi, 0x00006000
+  xor ebx, ebx
+  xor bp, bp
+  mov edx, 0x0534D4150
+  mov eax, 0xe820
+  mov [es:di + 20], dword 1
+  mov ecx, 24
+  int 0x15
+  jc nomemmap
+  mov edx, 0x0534D4150
+  cmp eax, edx
+  jne nomemmap
+  test ebx, ebx
+  je nomemmap
+  jmp jmpin
+
+nomemmap:
+
