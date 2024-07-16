@@ -76,6 +76,73 @@ set_A20:
   mov al, 0xD1
   out 0x64, al
 
+check_A20:
+  in al, 0x64
+  test al, 0x02
+  jnz check_A20
+  mov al, 0xDF
+  out 0x60, al
+
+  mov si, msg_load
+  call print_string_16
+  
+  mov edi, VBEModeInfoBlock
+  mov ax, 0x4F01
+
+  mov cx, 0x4118
+  mov bx, cx
+  int 0x10
+
+  cmp ax, 0x004F
+  jne halt
+  cmp byte [VBEModeInfoBlock.BitsPerPixel], 24
+  jne halt
+  or bx, 0x4000
+  mov ax, 0x4F02
+  int 0x10
+  cmp ax, 0x004F
+  jne halt
+
+  mov ax, [0x8006]
+  cmp ax, 0x3436
+  jne sig_fail
+  
+  mov si, msg_OK
+  call print_string_16
+
+  mov bl, 'B'
+
+  cli
+  lgdt [cs:GDTR32]
+  mov eax, cr0
+  or al, 0x01
+  mov cr0, eax
+  jmp 8:0x8000
+
+sig_fail:
+  mov si, msg_SigFail
+  call print_string_16
+
+halt:
+  hlt
+  jmp halt
+
+print_string_16:
+  pusha
+  mov dx, 0
+
+.repeat:
+  mov ah, 0x01
+  lodsb
+  cmp al, 0
+  je .done
+  int 0x14
+  jmp short .repeat
+
+.done:
+  popa
+  ret
+
 align 16
 GDTR32:
   dw gdt32_end - gdt32 - 1
@@ -100,6 +167,15 @@ times 1024-$+$$ db 0
 VBEModeInfoBlock: equ 0x5F00
 
 VBEModeInfoBlock.ModeAttributes equ VBEModeInfoBlock + 0
+VBEModeInfoBlock.WinAttributes equ VBEModeInfoBlock + 2
+VBEModeInfoBlock.WinBAttributes equ VBEModeInfoBlock + 3
+VBEModeInfoBlock.WinGranularity equ VBEModeInfoBlock + 4
+VBEModeInfoBlock.WinSize equ VBEModeInfoBlock + 6
+VBEModeInfoBlock.WinASegment equ VBEModeInfoBlock + 8
+VBEModeInfoBlock.WinBSegment equ VBEModeInfoBlock + 10
+VBEModeInfoBlock.WinFuncPtr equ VBEModeInfoBlock + 12
+VBEModeInfoBlock.BytesPerScanline equ VBEModeInfoBlock + 16
+VBEModeInfoBlock.XResolution equ VBEModeInfoBlock + 18
 VBEModeInfoBlock.PhysBasePtr equ VBEModeInfoBlock + 40
 VBEModeInfoBlock.Reserved1 equ VBEModeInfoBlock + 44
 VBEModeInfoBlock.Reserved2 equ VBEModeInfoBlock + 48
