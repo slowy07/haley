@@ -261,6 +261,88 @@ halt:
   halt
   jmp halt
 
+printhex:
+  mov rbp, 16
+  push rax
+  push rcx
+  push rdx
+  sub rsp, 32
+
+printhex_loop:
+  rol rbx, 4
+  mov rax, rbx
+  and rax, 0Fh
+  lea rcx, [Hex]
+  mov rax, [rax + rcx]
+  mov byte [num], al
+  lea rdx, [Num]
+  mov rcx, [OUTPUT]
+  call [rcx + EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_OUTPUTSTRING]
+  dec rbp
+  jnz printhex_loop
+  lea rdx, [newline]
+  mov rcx, [OUTPUT]
+  call [rcx + EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_OUTPUTSTRING]
+
+  add rsp, 32
+  pop rdx
+  pop rcx
+  pop rax
+  ret
+
+align 2048
+CODE_END:
+DATA:
+EFI_IMAGE_HANDLE: dq 0
+EFI_SYSTEM_TABLE: dq 0
+EFI_RETURN: dq 0
+BS: dq 0
+RTS: dq 0
+CONFIG: dq 0
+ACPI: dq 0
+OUTPUT: dq 0
+VIDEO: dq 0
+FB: dq 0
+FBS: dq 0
+HR: dq 0
+VR: dq 0
+PPSL: dq 0
+memmap: dq 0x200000
+memmapsize: dq 32768
+memmapkey: dq 0
+memmapdescsize: dq 0
+memmapdescver: dq 0
+vid_orig: dq 0
+vid_current: dq 0
+vid_max: dq 0
+vid_size: dq 0
+vid_info: dq 0
+
+ACPI_TABLE_GUID:
+  dd 0xeb9d2d30
+  dw 0x2d88, 0x11d3
+  db 0x9a, 0x16, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d
+
+EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID:
+  dd 0x9042a9de
+  dw 0x23dc, 0x4a38
+  db 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a
+
+msg_uefi: dw u('UEFI '), 0
+msg_OK: dw u('OK '), 0
+msg_error: dw u('Error '), 0
+msg_SigFail: dw u('Bad Sig!'), 0
+Hex: db '0123456789ABCDEF'
+Num: db, 0, 0
+newline: dw 13, 10, 0
+
+align 4096
+PAYLOAD:
+  
+align 65536
+DATA_END:
+END:
+
 EFI_SUCCESS equ 0
 EFI_LOAD_ERROR equ 1
 EFI_INVALID_PARAMETER equ 2
@@ -277,8 +359,21 @@ EFI_NO_MEDIA equ 12
 EFI_MEDIA_CHANGED equ 13
 EFI_NOT_FOUND equ 14
 
+EFI_SYSTEM_TABLE_CONOUT equ 64
+EFI_SYSTEM_TABLE_RUNTIMESERVICES equ 88
+EFI_SYSTEM_TABLE_BOOTSERVICES equ 96
 EFI_RUNTIME_SERVICE_RESETSYSTEM equ 104
+EFI_SYSTEM_TABLE_CONFIGURATION_TABLE 112
 
+EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_RESET equ 0
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_OUTPUTSTRING equ 8
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_SET_ATTRIBUTE equ 40
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_CLEAR_SCREEN equ 48
+
+EFI_BOOT_SERVICES_GETMEMORYMAP equ 56
+EFI_BOOT_SERVICE_EXITBOOTSERVICES equ 232
+EFI_BOOT_SERVICES_LOCATEPROTOCOL equ 320
+  
+EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE equ 24
+
+EFI_RUNTIME_SERVICE_RESETSYSTEM equ 104
